@@ -1,0 +1,126 @@
+clients:
+  - externalId: 100001
+    fullName: "Алексей Смирнов"
+    phoneNumber: "+7 978 345 6789"
+    address: "Москва, ул. Арбат, д. 12"
+
+  - externalId: 100002
+    fullName: "Екатерина Орлова"
+    phoneNumber: "+7 812 432 1076"
+    address: "Санкт-Петербург, пр. Литейный, д. 4"
+
+  - externalId: 100003
+    fullName: "Игорь Тихонов"
+    phoneNumber: "+7 978 789 2345"
+    address: "Казань, ул. Баумана, д. 31"
+
+  - externalId: 100004
+    fullName: "Мария Голубева"
+    phoneNumber: "+7 888 111 2233"
+    address: "Ростов-на-Дону, пр. Ворошиловский, д. 7"
+
+clientOrders:
+  - client: "Алексей Смирнов"
+    status: 1
+    total: 1310.0
+
+  - client: "Алексей Смирнов"
+    status: 2
+    total: 790.0
+
+  - client: "Екатерина Орлова"
+    status: 1
+    total: 1180.0
+
+  - client: "Екатерина Орлова"
+    status: 1
+    total: 690.0
+
+  - client: "Игорь Тихонов"
+    status: 2
+    total: 1550.0
+
+  - client: "Игорь Тихонов"
+    status: 1
+    total: 860.0
+
+  - client: "Мария Голубева"
+    status: 1
+    total: 975.0
+
+  - client: "Мария Голубева"
+    status: 2
+    total: 720.0
+
+orderProducts:
+  - clientOrder: 1
+    product: "Пепперони"
+    countProduct: 2
+
+  - clientOrder: 1
+    product: "Кола"
+    countProduct: 3
+
+  - clientOrder: 2
+    product: "Мясной пир"
+    countProduct: 1
+
+  - clientOrder: 2
+    product: "Апельсиновый сок"
+    countProduct: 2
+
+  - clientOrder: 3
+    product: "Сет Макси"
+    countProduct: 1
+
+  - clientOrder: 3
+    product: "Филадельфия"
+    countProduct: 2
+
+  - clientOrder: 3
+    product: "Спрайт"
+    countProduct: 2
+
+  - clientOrder: 4
+    product: "Окинава"
+    countProduct: 2
+
+  - clientOrder: 4
+    product: "Сет Острый"
+    countProduct: 1
+
+  - clientOrder: 5
+    product: "Бургер BBQ"
+    countProduct: 2
+
+  - clientOrder: 5
+    product: "Фанта"
+    countProduct: 3
+
+  - clientOrder: 5
+    product: "Бургер Пламя"
+    countProduct: 1
+
+  - clientOrder: 6
+    product: "Пицца Восток"
+    countProduct: 2
+
+  - clientOrder: 6
+    product: "Яблочный сок"
+    countProduct: 2
+
+  - clientOrder: 7
+    product: "Краб запечённый"
+    countProduct: 3
+
+  - clientOrder: 7
+    product: "Маракуйя ролл"
+    countProduct: 2
+
+  - clientOrder: 8
+    product: "Сет Классик"
+    countProduct: 1
+
+  - clientOrder: 8
+    product: "Клубничный ролл"
+    countProduct: 2
