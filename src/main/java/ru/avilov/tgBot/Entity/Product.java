@@ -41,7 +41,7 @@ public class Product {
         this.name = name;
     }
 
-    public Category setCategory() {
+    public Category getCategory() {
         return category;
     }
 
