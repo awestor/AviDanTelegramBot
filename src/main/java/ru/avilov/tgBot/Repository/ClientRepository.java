@@ -7,11 +7,14 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import ru.avilov.tgBot.Entity.Client;
 
 import java.util.List;
+import java.util.Optional;
 
 @RepositoryRestResource(collectionResourceRel = "clients", path = "clients")
 public interface ClientRepository extends JpaRepository<Client, Long> {
 
     @Query("SELECT c FROM Client c WHERE LOWER(c.fullName) LIKE LOWER(:pattern)")
     List<Client> searchByNameContainsIgnoreCase(@Param("pattern") String pattern);
+
+    boolean existsByExternalId(Long externalId);
 
 }
