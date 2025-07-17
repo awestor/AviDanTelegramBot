@@ -61,3 +61,7 @@ mvnw
 
 ### Git ###
 .gitattributes
+
+# Файл токена Telegram-бота
+token.txt
+encoded-token.txt
