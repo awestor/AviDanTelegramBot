@@ -11,7 +11,7 @@ import java.util.List;
  * для генерации сообщений Telegram с клавиатурами.
  * Используется для отображения навигации и подтверждений действий пользователя.
  */
-public interface TelegramMessageBuilder {
+public interface TelegramMessageCreator {
 
     /**
      * Строит клавиатуру с корневыми категориями.

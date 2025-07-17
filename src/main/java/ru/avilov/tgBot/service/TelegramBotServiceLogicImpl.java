@@ -4,6 +4,7 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -24,7 +25,7 @@ public class TelegramBotServiceLogicImpl implements TelegramBotServiceLogic {
     private final ClientRepository clientRepo;
     private final ClientOrderRepository clientOrderRepo;
     private final OrderProductRepository orderProductRepo;
-    private final TelegramMessageBuilderImpl messageBuilder;
+    private final TelegramMessageCreatorImpl messageBuilder;
 
     private enum RegistrationState { NONE, WAIT_PHONE, WAIT_ADDRESS }
 
@@ -36,7 +37,7 @@ public class TelegramBotServiceLogicImpl implements TelegramBotServiceLogic {
                                        ClientRepository clientRepo,
                                        ClientOrderRepository clientOrderRepo,
                                        OrderProductRepository orderProductRepo,
-                                       TelegramMessageBuilderImpl messageBuilder) {
+                                       TelegramMessageCreatorImpl messageBuilder) {
         this.categoryRepo = categoryRepo;
         this.productRepo = productRepo;
         this.clientRepo = clientRepo;
@@ -46,60 +47,96 @@ public class TelegramBotServiceLogicImpl implements TelegramBotServiceLogic {
     }
 
     @Override
-    public void handleMessage(Message message, TelegramBot bot) {
-        Long chatId = message.chat().id();
-        Chat chat = message.chat();
-        String text = message.text();
-        RegistrationState state = registrationMap.getOrDefault(chatId, RegistrationState.NONE);
+    public void handleUpdates(List<Update> updates, TelegramBot bot) {
+        for (Update update : updates) {
+            if (update.callbackQuery() != null) {
+                handleCallback(update.callbackQuery(), bot);
+            } else if (update.message() != null) {
+                handleMessage(update.message(), bot);
+            }
+        }
+    }
 
-        if (!clientRepo.existsByExternalId(chatId) && state == RegistrationState.NONE) {
+    private void handleMessage(Message message, TelegramBot bot) {
+        Long chatId = message.chat().id();
+        String text = message.text();
+
+        RegistrationState state = registrationMap.get(chatId);
+
+        if (state == null && clientRepo.existsByExternalId(chatId)) {
+            Client client = clientRepo.findByExternalId(chatId).orElseThrow();
+
+            if ("unknown".equals(client.getPhoneNumber())) {
+                registrationMap.put(chatId, RegistrationState.WAIT_PHONE);
+                bot.execute(new SendMessage(chatId, "Продолжим регистрацию. Введите номер телефона:"));
+                return;
+            } else if ("unknown".equals(client.getAddress())) {
+                registrationMap.put(chatId, RegistrationState.WAIT_ADDRESS);
+                bot.execute(new SendMessage(chatId, "Укажите адрес доставки:"));
+                return;
+            }
+        }
+
+        if (!clientRepo.existsByExternalId(chatId) && state == null) {
+            createClientAndOrder(chatId, message.chat());
             registrationMap.put(chatId, RegistrationState.WAIT_PHONE);
             bot.execute(new SendMessage(chatId, "Добро пожаловать! Введите номер телефона:"));
             return;
         }
 
-        switch (state) {
-            case WAIT_PHONE -> {
-                phoneBuffer.put(chatId, text);
-                registrationMap.put(chatId, RegistrationState.WAIT_ADDRESS);
-                bot.execute(new SendMessage(chatId, "Теперь укажите адрес доставки:"));
-            }
-            case WAIT_ADDRESS -> {
-                String phone = phoneBuffer.get(chatId);
-                String address = text;
-                String fullName = chat.firstName() + " " + chat.lastName();
-                String username = chat.username() != null ? chat.username() : "unknown";
-
-                Client client = new Client();
-                client.setExternalId(chatId);
-                client.setFullName(fullName);
-                client.setPhoneNumber(phone);
-                client.setAddress(address);
-
-                Client savedClient = clientRepo.save(client);
-
-                ClientOrder order = new ClientOrder();
-                order.setClient(savedClient);
-                order.setStatus(1);
-                order.setTotal(0.0);
-                clientOrderRepo.save(order);
-
-                registrationMap.remove(chatId);
-                phoneBuffer.remove(chatId);
-
-                List<Category> rootCategories = categoryRepo.findByParentIsNullOrderById();
-                bot.execute(messageBuilder.buildCategoryKeyboard(chatId, "Категории:", rootCategories));
-            }
-            default -> {
-                List<Category> rootCategories = categoryRepo.findByParentIsNullOrderById();
-                bot.execute(messageBuilder.buildCategoryKeyboard(chatId, "Категории:", rootCategories));
-            }
+        switch (registrationMap.getOrDefault(chatId, RegistrationState.NONE)) {
+            case WAIT_PHONE -> processPhoneInput(chatId, text, bot);
+            case WAIT_ADDRESS -> processAddressInput(chatId, text, bot);
+            default -> sendCategoryKeyboard(chatId, bot);
         }
     }
 
-    @Override
+
     @Transactional
-    public void handleCallback(CallbackQuery callback, TelegramBot bot) {
+    private void createClientAndOrder(Long chatId, Chat chat) {
+        String fullName = chat.firstName() + " " + chat.lastName();
+
+        Client client = new Client();
+        client.setExternalId(chatId);
+        client.setFullName(fullName);
+        client.setPhoneNumber("unknown");
+        client.setAddress("unknown");
+
+        ClientOrder order = new ClientOrder();
+        order.setClient(client);
+        order.setStatus(1);
+        order.setTotal(0.0);
+
+        clientRepo.save(client);
+        clientOrderRepo.save(order);
+    }
+
+    private void processPhoneInput(Long chatId, String phone, TelegramBot bot) {
+        Client client = clientRepo.findByExternalId(chatId).orElseThrow();
+        client.setPhoneNumber(phone);
+        clientRepo.save(client);
+
+        registrationMap.put(chatId, RegistrationState.WAIT_ADDRESS);
+        bot.execute(new SendMessage(chatId, "Теперь укажите адрес доставки:"));
+    }
+
+    private void processAddressInput(Long chatId, String address, TelegramBot bot) {
+        Client client = clientRepo.findByExternalId(chatId).orElseThrow();
+        client.setAddress(address);
+        clientRepo.save(client);
+
+        registrationMap.remove(chatId);
+        sendCategoryKeyboard(chatId, bot);
+    }
+
+    private void sendCategoryKeyboard(Long chatId, TelegramBot bot) {
+        List<Category> rootCategories = categoryRepo.findByParentIsNullOrderById();
+        bot.execute(messageBuilder.buildCategoryKeyboard(chatId, "Категории:", rootCategories));
+    }
+
+
+    @Transactional
+    private void handleCallback(CallbackQuery callback, TelegramBot bot) {
         Long chatId = callback.message().chat().id();
         String data = callback.data();
 
@@ -145,7 +182,6 @@ public class TelegramBotServiceLogicImpl implements TelegramBotServiceLogic {
             }
         }
     }
-
 
     private void handleCategory(String data, Long chatId, TelegramBot bot) {
         Long categoryId = Long.parseLong(data.split(":")[1]);

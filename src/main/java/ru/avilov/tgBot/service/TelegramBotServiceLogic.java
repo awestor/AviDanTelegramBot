@@ -1,8 +1,9 @@
 package ru.avilov.tgBot.service;
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.model.CallbackQuery;
-import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.Update;
+
+import java.util.List;
 
 /**
  * Интерфейс бизнес-логики Telegram-бота.
@@ -12,22 +13,14 @@ import com.pengrad.telegrambot.model.Message;
 public interface TelegramBotServiceLogic {
 
     /**
-     * Обрабатывает входящее текстовое сообщение от пользователя Telegram.
-     * Инициирует регистрацию пользователя, навигацию по категориям и обработку состояний.
+     * Обрабатывает список входящих обновлений от Telegram.
+     * В зависимости от типа обновления (текстовое сообщение или callback-запрос),
+     * делегирует обработку соответствующим приватным методам.
      *
-     * @param message входящее сообщение пользователя
+     * @param updates список входящих обновлений (сообщения, callback'и и др.)
      * @param bot TelegramBot-экземпляр, используемый для отправки ответов
      */
-    void handleMessage(Message message, TelegramBot bot);
+    void handleUpdates(List<Update> updates, TelegramBot bot);
 
-    /**
-     * Обрабатывает callback-запросы, возникающие при взаимодействии пользователя
-     * с inline-клавиатурами (кнопками).
-     * В зависимости от типа запроса выполняет соответствующую навигацию или действие.
-     *
-     * @param callback callback-запрос от Telegram
-     * @param bot TelegramBot-экземпляр, используемый для отправки ответов
-     */
-    void handleCallback(CallbackQuery callback, TelegramBot bot);
 }
 

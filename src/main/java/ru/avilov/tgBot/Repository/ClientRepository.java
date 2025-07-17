@@ -12,9 +12,30 @@ import java.util.Optional;
 @RepositoryRestResource(collectionResourceRel = "clients", path = "clients")
 public interface ClientRepository extends JpaRepository<Client, Long> {
 
+    /**
+     * Ищет клиентов, чьё полное имя содержит заданную подстроку,
+     * без учёта регистра.
+     *
+     * @param pattern строка-подстрока для поиска в поле fullName
+     * @return список клиентов, удовлетворяющих критерию
+     */
     @Query("SELECT c FROM Client c WHERE LOWER(c.fullName) LIKE LOWER(:pattern)")
     List<Client> searchByNameContainsIgnoreCase(@Param("pattern") String pattern);
 
+    /**
+     * Проверяет наличие клиента по его внешнему идентификатору из Telegram.
+     *
+     * @param externalId Telegram ID пользователя
+     * @return true, если клиент с таким ID существует
+     */
     boolean existsByExternalId(Long externalId);
+
+    /**
+     * Находит клиента по его внешнему идентификатору из Telegram.
+     *
+     * @param externalId Telegram ID пользователя
+     * @return Optional с найденным клиентом или пустой, если не найден
+     */
+    Optional<Client> findByExternalId(Long externalId);
 
 }

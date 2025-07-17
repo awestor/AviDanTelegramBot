@@ -14,17 +14,38 @@ import java.util.Optional;
 @RepositoryRestResource(collectionResourceRel = "products", path = "products")
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+    /**
+     * Возвращает список товаров, принадлежащих указанной категории.
+     *
+     * @param categoryId идентификатор категории, к которой относятся товары
+     * @return список товаров с загруженной категорией
+     */
     @Query("SELECT prod FROM Product prod JOIN FETCH prod.category WHERE prod.category.id = :categoryId")
     List<Product> findProductsByCategoryId(@Param("categoryId") Long categoryId);
 
 
+    /**
+     * Ищет товары, имя которых содержит заданную подстроку (без учёта регистра).
+     *
+     * @param pattern текстовый шаблон
+     * @return список совпадающих товаров
+     */
     @Query("SELECT prod FROM Product prod WHERE LOWER(prod.name) LIKE LOWER(:pattern)")
     List<Product> findByNameLikeIgnoreCase(@Param("pattern") String pattern);
 
+    /**
+     * Получает товары, относящиеся к заданной категории, отсортированные по ID.
+     *
+     * @param categoryId идентификатор категории
+     * @return отсортированный список товаров
+     */
     List<Product> findByCategoryIdOrderById(Long categoryId);
 
     /**
-     * Возвращает продукт по ID, но может и вернуть Optional.empty()!!!
+     * Находит товар по его идентификатору.
+     *
+     * @param id уникальный идентификатор товара
+     * @return {@link Optional} с найденным товаром или пустой, если не найден
      */
     Optional<Product> findById(Long id);
 
